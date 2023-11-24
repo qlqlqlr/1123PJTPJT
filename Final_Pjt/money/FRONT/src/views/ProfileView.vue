@@ -6,21 +6,9 @@
       <div style="text-align: center; font-size: 30px; margin-bottom: 15px;"><strong>MY PROFILE</strong></div>
       <div class="profile-box" style="height: 140px; display: flex; justify-content: center; align-items: center;">
         <div>
-        <span style="font-size: 20px;"><strong>{{ info.username }}</strong></span> 님의 회원 등급은 <span style="font-size: 20px;"><strong>FAMILY</strong></span> 입니다. <br>
+        <span style="font-size: 20px;"><strong>{{ info.username }}</strong></span> 님의 회원 등급은 <span style="font-size: 20px;"><strong>{{ level }}</strong></span> 입니다. <br>
             <!-- 수정 폼 -->
-            <form v-if="isEditMode" @submit.prevent="submitForm">
-        <label for="money">Money:</label>
-        <input id="money" v-model="editedInfo.money" />
-
-        <label for="salary">Salary:</label>
-        <input id="salary" v-model="editedInfo.salary" />
-
-        <label for="age">Age:</label>
-        <input id="age" v-model="editedInfo.age" />
-
-        <button type="submit">Save</button>
-        <button @click="cancelEditMode">Cancel</button>
-      </form>
+            
       
       </div>
     </div>
@@ -36,8 +24,28 @@
           </div>
           <div class="info-item">
             <strong>나이 :</strong> {{ info.age }}
-            <hr>
           </div>
+          <div>
+            <strong>1년 내 여행 횟수 :</strong> {{ info.travel }}
+          </div>  
+      <form v-if="isEditMode" @submit.prevent="submitForm">
+        <label for="money">자산내역 :</label>
+        <input id="money" v-model="editedInfo.money" />
+
+        <label for="salary">소득:</label>
+        <input id="salary" v-model="editedInfo.salary" />
+
+        <label for="age">나이:</label>
+        <input id="age" v-model="editedInfo.age" />
+
+        <label for="travel">1년내 여행 횟수:</label>
+        <input id="travel" v-model="editedInfo.travel" />
+
+        <button type="submit">Save</button>
+        <button @click="cancelEditMode">Cancel</button>
+      </form>
+            <hr>
+          
         </div>
       <div>
           <div v-if="info.financial_products" class="info-item">
@@ -53,9 +61,8 @@
 
       <div class="recommended-products">
       <h1>추천상품</h1>
-        <div v-for="recopro in recommendlist.recommended_products">
+        <div v-for="recopro in recommendlist">
           {{ recopro }}
-          <!-- {{ recommendlist.recommended_products }} -->
 
         </div>
       </div>
@@ -69,6 +76,7 @@ import axios from 'axios'
 import { ref, onMounted } from 'vue'
 import { useCounterStore } from '@/stores/counter'
 import { useRoute, useRouter } from 'vue-router'
+import { computed } from '@vue/reactivity';
 
 const store = useCounterStore()
 const route = useRoute()
@@ -78,11 +86,15 @@ const editedInfo = ref({
   money: 0,
   salary: 0,
   age: 0,
+  travel: 0,
   financial_products: '',
 })
 const isEditMode = ref(false)
 const isLoading = ref(true)
+const findlist = ref([])
 const recommendlist = ref([])
+const level = ref('FAMILY')
+
 
 
 
@@ -95,16 +107,13 @@ const toggleEditMode = () => {
 }
 
 const submitForm = () => {
-  // 수정된 정보를 서버에 보내고, 응답을 받아서 처리하는 로직 추가
   axios({
     method: 'put',
     url: `${store.API_URL}/profile/accounts/profile_edit/${route.params.username}/`,
     data: editedInfo.value,
   })
     .then((res) => {
-      // 서버 응답을 처리하거나, 필요하다면 상태를 업데이트할 수 있음
-      // 여기에서는 간단히 수정 모드를 종료
-      console.log(res)
+      console.log(res.data)
       isEditMode.value = false
       axios({
     method: 'get',
@@ -112,6 +121,7 @@ const submitForm = () => {
   })
     .then((res) => {
       info.value = res.data
+      
     })
     .catch((err) => console.log(err))
     .finally(() => {
@@ -138,6 +148,16 @@ onMounted(() => {
   })
     .then((res) => {
       info.value = res.data
+      if (info.value.financial_products != []) {
+      if (info.value.financial_products.split(',').length > 2) {
+        level.value = 'VIP'
+      } else if (1 < info.value.financial_products.split(',').length && info.value.financial_products.split(',').length<= 2) {
+        level.value = 'PREMIUM'
+      } else {
+        level.value = 'FAMILY'
+      }}
+      console.log(info.value.financial_products.split(',').length)
+      console.log(level.value)
     })
     .catch((err) => console.log(err))
     .finally(() => {
@@ -148,8 +168,34 @@ onMounted(() => {
     url: `${store.API_URL}/profile/recommend/${store.name}/`,
   })
     .then((res) => {
-      recommendlist.value = res.data
-      console.log(res.data.recommended_products)
+      findlist.value = res.data.recommended_products
+      findlist.value.forEach((rec) => {
+        // console.log(rec)
+        
+        const findDep = store.deps.find((dep) => {
+          return rec === dep.fin_prdt_cd
+        })
+        if (findDep) {
+
+          recommendlist.value.push(
+            findDep.fin_prdt_nm
+          );
+        }
+
+      })
+      findlist.value.forEach((rec) => {
+        // console.log(rec)
+        const findDep = store.fins.find((dep) => {
+          return rec === dep.fin_prdt_cd
+        })
+        if (findDep) {
+
+          recommendlist.value.push(
+            findDep.fin_prdt_nm
+          );
+        }
+
+      })
     })
     .catch((err) => console.log(err))
     .finally(() => {
@@ -157,6 +203,10 @@ onMounted(() => {
     })
 
 
+})
+
+const temp = computed(() => {
+  console.log(recommendlist.value.recommended_products);
 })
 
 

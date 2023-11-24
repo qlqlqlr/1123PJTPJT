@@ -51,7 +51,7 @@ class ItemSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['money', 'age', 'salary', 'nickname','username',]
+        fields = ['money', 'age', 'salary', 'nickname','username', 'travel',]
 
 
 

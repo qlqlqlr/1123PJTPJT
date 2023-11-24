@@ -98,13 +98,15 @@ def recommend(request, username):
                           df_main.loc[index, 'travel'] == target_user_travel]
     print('##################&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
     print(target_users_selected)
+    print('##################&&&&&&&&&&&&&&&&&&&&&&&&&&&&')
+    # print(target_user_travel)
     # print(similarities_combined)
     # print(similar_users_combined)
     # 새로운 사용자와 유사한 나이, 결혼 여부가 같고 돈이 비슷한 사용자들이 가입한 상품 출력
     similar_users_products = df_existing.iloc[target_users_selected]['financial_products']
     # 상품을 하나의 리스트로 합침
     all_products = [products.split(',') for products in similar_users_products]
-    all_products = [product for sublist in all_products for product in sublist][:5]
+    all_products = [product for sublist in all_products for product in sublist]
 
     # 중복 제거
     unique_products = list(set(all_products))
@@ -113,6 +115,6 @@ def recommend(request, username):
     # print("새로운 사용자와 유사한 나이, 결혼 여부가 같고 돈이 비슷한 사용자들이 가입한 상품:")
     # print(unique_products)
 
-    response_data = {'recommended_products': unique_products}
+    response_data = {'recommended_products': unique_products[1:6]}
     # json_response = json.dumps(response_data, ensure_ascii=False)
     return JsonResponse(response_data, safe=False)

@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h3></h3>
+        <h3>PostList component</h3>
         <hr>
     </div>
     <div v-if="store.articles">
